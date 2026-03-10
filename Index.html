@@ -3,202 +3,881 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip Expense Splitter</title>
+    <title>TripSplit - Trip Expense Splitter</title>
     <style>
         :root {
             --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --success: #059669;
+            --success-hover: #047857;
+            --danger: #DC2626;
+            --danger-hover: #B91C1C;
+            --warning: #D97706;
             --bg: #F9FAFB;
             --card-bg: #FFFFFF;
             --text: #111827;
+            --text-muted: #6B7280;
             --border: #E5E7EB;
+            --tag-bg: #EEF2FF;
+            --tag-text: #4338CA;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 20px;
+            line-height: 1.5;
         }
-        h1, h2 { text-align: center; }
+
+        h1 { text-align: center; margin-bottom: 4px; font-size: 1.8rem; }
+        h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--text); }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem; }
+
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
+
         input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
+            padding: 10px 14px;
             border: 1px solid var(--border);
-            border-radius: 4px;
-            box-sizing: border-box;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
         }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
         button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            border: none;
+            transition: background-color 0.15s;
         }
-        button:hover { background-color: #4338CA; }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .btn-outline:hover { background-color: #F3F4F6; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+        .btn-full { width: 100%; }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .form-row input, .form-row select { flex: 1; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+        .form-group input, .form-group select { width: 100%; }
+
         ul { list-style-type: none; padding: 0; }
-        li {
-            padding: 10px;
+
+        .member-item {
+            padding: 8px 0;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
-        li:last-child { border-bottom: none; }
-        .positive { color: #059669; font-weight: bold; }
-        .negative { color: #DC2626; font-weight: bold; }
+        .member-item:last-child { border-bottom: none; }
+
+        .expense-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .expense-desc { font-weight: 600; }
+        .expense-amount { font-weight: 700; color: var(--primary); }
+        .expense-detail { font-size: 0.85rem; color: var(--text-muted); }
+
+        .settlement-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .settlement-item:last-child { border-bottom: none; }
+        .settlement-text { flex: 1; }
+        .settlement-arrow { color: var(--danger); font-weight: 600; }
+
+        .tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .positive { color: var(--success); font-weight: 700; }
+        .negative { color: var(--danger); font-weight: 700; }
+
+        .checkbox-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .checkbox-label:has(input:checked) {
+            background: var(--tag-bg);
+            border-color: var(--tag-text);
+        }
+        .checkbox-label input { cursor: pointer; }
+
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .trip-name { font-size: 1.3rem; font-weight: 700; }
+        .trip-meta { font-size: 0.85rem; color: var(--text-muted); }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 16px;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .settled-overlay {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .balance-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+        .balance-name { min-width: 80px; font-weight: 600; font-size: 0.9rem; }
+        .balance-visual {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .balance-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .balance-value { min-width: 80px; text-align: right; font-size: 0.85rem; font-weight: 600; }
+
+        #startScreen, #appScreen { display: none; }
+        #startScreen.active, #appScreen.active { display: block; }
+
+        .trip-list-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .trip-list-item:hover { border-color: var(--primary); background: #FAFAFE; }
+        .trip-list-info { flex: 1; }
+        .trip-list-name { font-weight: 700; }
+        .trip-list-meta { font-size: 0.8rem; color: var(--text-muted); }
+        .trip-list-actions { display: flex; gap: 6px; }
+
+        @media (max-width: 500px) {
+            .form-row { flex-direction: column; }
+            .settlement-item { flex-direction: column; align-items: flex-start; }
+            .settlement-item button { align-self: flex-end; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>✈️ TripSplit</h1>
+    <h1>TripSplit</h1>
+    <p class="subtitle">Split expenses fairly on any trip</p>
 
-    <div class="card">
-        <h2>1. Add Trip Members</h2>
-        <form id="addUserForm">
-            <input type="text" id="userName" placeholder="Enter name (e.g., Alice)" required>
-            <button type="submit">Add Member</button>
-        </form>
-        <ul id="userList"></ul>
+    <!-- START SCREEN -->
+    <div id="startScreen" class="active">
+        <div class="card">
+            <h2>Start a New Trip</h2>
+            <form id="newTripForm">
+                <div class="form-row">
+                    <input type="text" id="tripNameInput" placeholder="Trip name (e.g., Bali 2026)" required>
+                    <button type="submit" class="btn-primary">Create Trip</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" id="savedTripsCard" style="display:none;">
+            <h2>Saved Trips</h2>
+            <div id="savedTripsList"></div>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>2. Add an Expense</h2>
-        <form id="addExpenseForm">
-            <input type="text" id="expenseDesc" placeholder="What was it for? (e.g., Dinner)" required>
-            <input type="number" id="expenseAmount" placeholder="Total Amount ($)" step="0.01" required>
-            <select id="expensePayer" required>
-                <option value="" disabled selected>Who paid?</option>
-            </select>
-            <button type="submit">Record Expense</button>
-        </form>
-    </div>
+    <!-- APP SCREEN -->
+    <div id="appScreen">
+        <div class="card">
+            <div class="trip-header">
+                <div>
+                    <div class="trip-name" id="tripTitle"></div>
+                    <div class="trip-meta" id="tripMeta"></div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-outline btn-sm" onclick="goHome()">All Trips</button>
+                    <button class="btn-danger btn-sm" onclick="deleteCurrentTrip()">Delete</button>
+                </div>
+            </div>
+        </div>
 
-    <div class="card">
-        <h2>3. Who Owes Whom?</h2>
-        <ul id="settlementList">
-            <li><em>Add members and expenses to see balances.</em></li>
-        </ul>
+        <div class="card">
+            <h2>Members</h2>
+            <form id="addUserForm">
+                <div class="form-row">
+                    <input type="text" id="userName" placeholder="Enter name (e.g., Alice)" required>
+                    <button type="submit" class="btn-primary">Add</button>
+                </div>
+            </form>
+            <ul id="userList"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Add Expense</h2>
+            <form id="addExpenseForm">
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="expenseDesc" placeholder="e.g., Dinner at the beach" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount ($)</label>
+                    <input type="number" id="expenseAmount" placeholder="0.00" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Who paid?</label>
+                    <select id="expensePayer" required>
+                        <option value="" disabled selected>Select payer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Split between</label>
+                    <div id="splitCheckboxes" class="checkbox-grid"></div>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Add Expense</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="section-tabs">
+                <button class="tab-btn active" data-tab="settlements" onclick="switchTab('settlements')">Settlements</button>
+                <button class="tab-btn" data-tab="balances" onclick="switchTab('balances')">Balances</button>
+                <button class="tab-btn" data-tab="history" onclick="switchTab('history')">History</button>
+            </div>
+
+            <div id="tab-settlements" class="tab-content active">
+                <div id="settlementList">
+                    <div class="empty-state">Add members and expenses to see who owes whom.</div>
+                </div>
+            </div>
+
+            <div id="tab-balances" class="tab-content">
+                <div id="balanceList">
+                    <div class="empty-state">Add members and expenses to see balances.</div>
+                </div>
+            </div>
+
+            <div id="tab-history" class="tab-content">
+                <div id="expenseHistory">
+                    <div class="empty-state">No expenses recorded yet.</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // State Management
-        let users = [];
-        let expenses = [];
+        // ========================================
+        // State
+        // ========================================
+        let trips = JSON.parse(localStorage.getItem('tripsplit_trips') || '[]');
+        let currentTripId = null;
 
-        // DOM Elements
-        const userForm = document.getElementById('addUserForm');
-        const expenseForm = document.getElementById('addExpenseForm');
-        const userList = document.getElementById('userList');
-        const expensePayerSelect = document.getElementById('expensePayer');
-        const settlementList = document.getElementById('settlementList');
+        function getCurrentTrip() {
+            return trips.find(t => t.id === currentTripId);
+        }
 
-        // Add User Logic
-        userForm.addEventListener('submit', function(e) {
+        function save() {
+            localStorage.setItem('tripsplit_trips', JSON.stringify(trips));
+        }
+
+        // ========================================
+        // Trip Management
+        // ========================================
+        const startScreen = document.getElementById('startScreen');
+        const appScreen = document.getElementById('appScreen');
+
+        function showStartScreen() {
+            startScreen.classList.add('active');
+            appScreen.classList.remove('active');
+            renderSavedTrips();
+        }
+
+        function showAppScreen() {
+            startScreen.classList.remove('active');
+            appScreen.classList.add('active');
+        }
+
+        function renderSavedTrips() {
+            const card = document.getElementById('savedTripsCard');
+            const list = document.getElementById('savedTripsList');
+            if (trips.length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = 'block';
+            list.innerHTML = '';
+            trips.forEach(trip => {
+                const div = document.createElement('div');
+                div.className = 'trip-list-item';
+                const memberCount = trip.users.length;
+                const expenseCount = trip.expenses.length;
+                const totalSpent = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
+                div.innerHTML = `
+                    <div class="trip-list-info" onclick="loadTrip('${trip.id}')">
+                        <div class="trip-list-name">${escapeHtml(trip.name)}</div>
+                        <div class="trip-list-meta">${memberCount} members &middot; ${expenseCount} expenses &middot; $${totalSpent.toFixed(2)} total</div>
+                    </div>
+                    <div class="trip-list-actions">
+                        <button class="btn-danger btn-sm" onclick="event.stopPropagation(); deleteTripById('${trip.id}')">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('newTripForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const input = document.getElementById('tripNameInput');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const trip = {
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+                name: name,
+                createdAt: new Date().toISOString(),
+                users: [],
+                expenses: [],
+                settlements: []
+            };
+            trips.push(trip);
+            save();
+            input.value = '';
+            loadTrip(trip.id);
+        });
+
+        function loadTrip(id) {
+            currentTripId = id;
+            const trip = getCurrentTrip();
+            if (!trip) return showStartScreen();
+
+            document.getElementById('tripTitle').textContent = trip.name;
+            const date = new Date(trip.createdAt);
+            document.getElementById('tripMeta').textContent = `Created ${date.toLocaleDateString()}`;
+
+            showAppScreen();
+            updateUserUI();
+            calculateBalances();
+            renderExpenseHistory();
+        }
+
+        function goHome() {
+            currentTripId = null;
+            showStartScreen();
+        }
+
+        function deleteCurrentTrip() {
+            if (!confirm('Delete this trip and all its data? This cannot be undone.')) return;
+            trips = trips.filter(t => t.id !== currentTripId);
+            save();
+            goHome();
+        }
+
+        function deleteTripById(id) {
+            if (!confirm('Delete this trip?')) return;
+            trips = trips.filter(t => t.id !== id);
+            save();
+            renderSavedTrips();
+        }
+
+        // ========================================
+        // Members
+        // ========================================
+        document.getElementById('addUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const trip = getCurrentTrip();
+            if (!trip) return;
+
             const nameInput = document.getElementById('userName');
             const name = nameInput.value.trim();
-            
-            if (name && !users.includes(name)) {
-                users.push(name);
+
+            if (name && !trip.users.includes(name)) {
+                trip.users.push(name);
+                save();
                 updateUserUI();
                 calculateBalances();
                 nameInput.value = '';
+            } else if (trip.users.includes(name)) {
+                alert('This member already exists!');
             }
         });
 
-        // Add Expense Logic
-        expenseForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (users.length === 0) {
-                alert("Please add members to the trip first!");
+        function removeUser(name) {
+            const trip = getCurrentTrip();
+            if (!trip) return;
+
+            const hasExpenses = trip.expenses.some(e => e.payer === name || e.splitWith.includes(name));
+            if (hasExpenses) {
+                alert('Cannot remove a member who is part of existing expenses. Delete those expenses first.');
                 return;
             }
-
-            const desc = document.getElementById('expenseDesc').value;
-            const amount = parseFloat(document.getElementById('expenseAmount').value);
-            const payer = document.getElementById('expensePayer').value;
-
-            expenses.push({ desc, amount, payer });
+            trip.users = trip.users.filter(u => u !== name);
+            save();
+            updateUserUI();
             calculateBalances();
-            
-            document.getElementById('expenseDesc').value = '';
-            document.getElementById('expenseAmount').value = '';
-            document.getElementById('expensePayer').value = '';
-        });
+        }
 
-        // Update User List & Dropdown
         function updateUserUI() {
+            const trip = getCurrentTrip();
+            if (!trip) return;
+
+            const userList = document.getElementById('userList');
+            const payerSelect = document.getElementById('expensePayer');
+            const checkboxContainer = document.getElementById('splitCheckboxes');
+
             userList.innerHTML = '';
-            expensePayerSelect.innerHTML = '<option value="" disabled selected>Who paid?</option>';
-            
-            users.forEach(user => {
-                // Update List
+            payerSelect.innerHTML = '<option value="" disabled selected>Select payer</option>';
+            checkboxContainer.innerHTML = '';
+
+            if (trip.users.length === 0) {
+                userList.innerHTML = '<div class="empty-state">No members yet.</div>';
+            }
+
+            trip.users.forEach(user => {
+                // Member list
                 const li = document.createElement('li');
-                li.textContent = user;
+                li.className = 'member-item';
+                li.innerHTML = `
+                    <span>${escapeHtml(user)}</span>
+                    <button class="btn-outline btn-sm" onclick="removeUser('${escapeJs(user)}')">Remove</button>
+                `;
                 userList.appendChild(li);
 
-                // Update Dropdown
+                // Payer dropdown
                 const option = document.createElement('option');
                 option.value = user;
                 option.textContent = user;
-                expensePayerSelect.appendChild(option);
+                payerSelect.appendChild(option);
+
+                // Split checkboxes
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                label.innerHTML = `<input type="checkbox" value="${escapeHtml(user)}" checked> ${escapeHtml(user)}`;
+                checkboxContainer.appendChild(label);
             });
         }
 
-        // The Core Logic: Calculate Balances
+        // ========================================
+        // Expenses
+        // ========================================
+        document.getElementById('addExpenseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const trip = getCurrentTrip();
+            if (!trip) return;
+
+            if (trip.users.length < 2) {
+                alert('Add at least 2 members before recording expenses.');
+                return;
+            }
+
+            const desc = document.getElementById('expenseDesc').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const payer = document.getElementById('expensePayer').value;
+
+            if (!payer) {
+                alert('Please select who paid.');
+                return;
+            }
+
+            const splitCheckboxes = document.querySelectorAll('#splitCheckboxes input[type="checkbox"]:checked');
+            const splitWith = Array.from(splitCheckboxes).map(cb => cb.value);
+
+            if (splitWith.length === 0) {
+                alert('Select at least one person to split with.');
+                return;
+            }
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+
+            trip.expenses.push({
+                id: Date.now().toString(36),
+                desc,
+                amount,
+                payer,
+                splitWith,
+                date: new Date().toISOString()
+            });
+            save();
+
+            // Reset form
+            document.getElementById('expenseDesc').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expensePayer').value = '';
+            document.querySelectorAll('#splitCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = true);
+
+            calculateBalances();
+            renderExpenseHistory();
+        });
+
+        function deleteExpense(expenseId) {
+            const trip = getCurrentTrip();
+            if (!trip) return;
+            if (!confirm('Delete this expense?')) return;
+
+            trip.expenses = trip.expenses.filter(e => e.id !== expenseId);
+            // Also remove any settlements that reference this expense
+            save();
+            calculateBalances();
+            renderExpenseHistory();
+        }
+
+        function renderExpenseHistory() {
+            const trip = getCurrentTrip();
+            const container = document.getElementById('expenseHistory');
+            if (!trip || trip.expenses.length === 0) {
+                container.innerHTML = '<div class="empty-state">No expenses recorded yet.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            // Show newest first
+            [...trip.expenses].reverse().forEach(exp => {
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                const date = new Date(exp.date);
+                const splitNames = exp.splitWith.map(n => escapeHtml(n)).join(', ');
+                const perPerson = (exp.amount / exp.splitWith.length).toFixed(2);
+                div.innerHTML = `
+                    <div class="expense-header">
+                        <span class="expense-desc">${escapeHtml(exp.desc)}</span>
+                        <span class="expense-amount">$${exp.amount.toFixed(2)}</span>
+                    </div>
+                    <div class="expense-detail">
+                        Paid by <strong>${escapeHtml(exp.payer)}</strong> &middot;
+                        $${perPerson}/person &middot;
+                        ${date.toLocaleDateString()}
+                    </div>
+                    <div class="expense-detail" style="margin-top:2px;">
+                        Split: ${splitNames}
+                    </div>
+                    <div style="margin-top:6px;">
+                        <button class="btn-outline btn-sm" onclick="deleteExpense('${exp.id}')">Delete</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ========================================
+        // Balance Calculation & Settlement Suggestions
+        // ========================================
         function calculateBalances() {
-            if (users.length === 0) return;
+            const trip = getCurrentTrip();
+            if (!trip) return;
 
-            // Step 1: Initialize balances to 0
-            let balances = {};
-            users.forEach(user => balances[user] = 0);
+            const balances = {};
+            trip.users.forEach(u => balances[u] = 0);
 
-            // Step 2: Calculate net balances based on expenses
-            expenses.forEach(exp => {
-                const splitAmount = exp.amount / users.length;
-                
-                // The payer gets credited the full amount
-                balances[exp.payer] += exp.amount;
-                
-                // Everyone (including the payer) gets debited their split share
-                users.forEach(user => {
-                    balances[user] -= splitAmount;
+            // Calculate net balances
+            trip.expenses.forEach(exp => {
+                const perPerson = exp.amount / exp.splitWith.length;
+                // Payer is credited
+                balances[exp.payer] = (balances[exp.payer] || 0) + exp.amount;
+                // Each person in the split is debited
+                exp.splitWith.forEach(person => {
+                    balances[person] = (balances[person] || 0) - perPerson;
                 });
             });
 
-            // Step 3: Render the balances to the UI
-            settlementList.innerHTML = '';
-            let isSettled = true;
+            // Apply existing settlements
+            (trip.settlements || []).forEach(s => {
+                balances[s.from] = (balances[s.from] || 0) + s.amount;
+                balances[s.to] = (balances[s.to] || 0) - s.amount;
+            });
 
-            for (const [user, balance] of Object.entries(balances)) {
-                if (Math.abs(balance) > 0.01) { // Ignoring tiny rounding errors
-                    isSettled = false;
-                    const li = document.createElement('li');
-                    
-                    if (balance > 0) {
-                        li.innerHTML = `<span>${user}</span> <span class="positive">gets back $${balance.toFixed(2)}</span>`;
-                    } else {
-                        li.innerHTML = `<span>${user}</span> <span class="negative">owes $${Math.abs(balance).toFixed(2)}</span>`;
-                    }
-                    settlementList.appendChild(li);
+            renderBalances(balances);
+            renderSettlements(balances);
+        }
+
+        function renderBalances(balances) {
+            const container = document.getElementById('balanceList');
+            const entries = Object.entries(balances);
+
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="empty-state">Add members and expenses to see balances.</div>';
+                return;
+            }
+
+            const maxAbs = Math.max(...entries.map(([_, v]) => Math.abs(v)), 1);
+            container.innerHTML = '';
+
+            entries.forEach(([name, balance]) => {
+                const div = document.createElement('div');
+                div.className = 'balance-bar';
+                const isPositive = balance >= 0;
+                const pct = Math.min((Math.abs(balance) / maxAbs) * 100, 100);
+                const color = isPositive ? 'var(--success)' : 'var(--danger)';
+                const sign = isPositive ? '+' : '';
+                div.innerHTML = `
+                    <span class="balance-name">${escapeHtml(name)}</span>
+                    <div class="balance-visual">
+                        <div class="balance-fill" style="width:${pct}%; background:${color};"></div>
+                    </div>
+                    <span class="balance-value" style="color:${color}">${sign}$${balance.toFixed(2)}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderSettlements(balances) {
+            const container = document.getElementById('settlementList');
+            const trip = getCurrentTrip();
+
+            // Compute simplified settlement transactions (greedy algorithm)
+            const debtors = []; // people who owe money (negative balance)
+            const creditors = []; // people who are owed money (positive balance)
+
+            for (const [name, balance] of Object.entries(balances)) {
+                if (balance < -0.01) {
+                    debtors.push({ name, amount: -balance });
+                } else if (balance > 0.01) {
+                    creditors.push({ name, amount: balance });
                 }
             }
 
-            if (isSettled && expenses.length > 0) {
-                settlementList.innerHTML = '<li><em>Everyone is settled up!</em></li>';
-            } else if (expenses.length === 0 && users.length > 0) {
-                 settlementList.innerHTML = '<li><em>No expenses yet.</em></li>';
+            // Sort descending by amount for efficient matching
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+
+            const transactions = [];
+            let i = 0, j = 0;
+
+            while (i < debtors.length && j < creditors.length) {
+                const d = debtors[i];
+                const c = creditors[j];
+                const transferAmount = Math.min(d.amount, c.amount);
+
+                if (transferAmount > 0.01) {
+                    transactions.push({
+                        from: d.name,
+                        to: c.name,
+                        amount: Math.round(transferAmount * 100) / 100
+                    });
+                }
+
+                d.amount -= transferAmount;
+                c.amount -= transferAmount;
+
+                if (d.amount < 0.01) i++;
+                if (c.amount < 0.01) j++;
             }
+
+            container.innerHTML = '';
+
+            if (transactions.length === 0) {
+                if (trip && trip.expenses.length > 0) {
+                    container.innerHTML = '<div class="empty-state">Everyone is settled up!</div>';
+                } else if (trip && trip.users.length > 0) {
+                    container.innerHTML = '<div class="empty-state">No expenses yet.</div>';
+                } else {
+                    container.innerHTML = '<div class="empty-state">Add members and expenses to see who owes whom.</div>';
+                }
+                return;
+            }
+
+            // Render existing settlements
+            if (trip.settlements && trip.settlements.length > 0) {
+                const settledDiv = document.createElement('div');
+                settledDiv.style.marginBottom = '12px';
+                settledDiv.innerHTML = '<div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px; font-weight:600;">Previous settlements</div>';
+                trip.settlements.forEach((s, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'settlement-item settled-overlay';
+                    const date = new Date(s.date);
+                    div.innerHTML = `
+                        <div class="settlement-text">
+                            <strong>${escapeHtml(s.from)}</strong>
+                            <span class="settlement-arrow"> paid </span>
+                            <strong>${escapeHtml(s.to)}</strong>
+                            <span> $${s.amount.toFixed(2)}</span>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${date.toLocaleDateString()}</div>
+                        </div>
+                        <button class="btn-outline btn-sm" onclick="undoSettlement(${idx})">Undo</button>
+                    `;
+                    settledDiv.appendChild(div);
+                });
+                container.appendChild(settledDiv);
+            }
+
+            // Render pending transactions
+            transactions.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'settlement-item';
+                div.innerHTML = `
+                    <div class="settlement-text">
+                        <strong>${escapeHtml(t.from)}</strong>
+                        <span class="settlement-arrow"> owes </span>
+                        <strong>${escapeHtml(t.to)}</strong>
+                        <span class="negative"> $${t.amount.toFixed(2)}</span>
+                    </div>
+                    <button class="btn-success btn-sm" onclick="settleDebt('${escapeJs(t.from)}', '${escapeJs(t.to)}', ${t.amount})">Settle</button>
+                `;
+                container.appendChild(div);
+            });
         }
+
+        function settleDebt(from, to, amount) {
+            const trip = getCurrentTrip();
+            if (!trip) return;
+
+            if (!trip.settlements) trip.settlements = [];
+            trip.settlements.push({
+                from,
+                to,
+                amount,
+                date: new Date().toISOString()
+            });
+            save();
+            calculateBalances();
+        }
+
+        function undoSettlement(index) {
+            const trip = getCurrentTrip();
+            if (!trip || !trip.settlements) return;
+
+            trip.settlements.splice(index, 1);
+            save();
+            calculateBalances();
+        }
+
+        // ========================================
+        // Tabs
+        // ========================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabName);
+            });
+        }
+
+        // ========================================
+        // Utilities
+        // ========================================
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function escapeJs(str) {
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        // ========================================
+        // Init
+        // ========================================
+        showStartScreen();
     </script>
 </body>
 </html>
