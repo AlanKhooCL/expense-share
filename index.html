@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Trip Planner</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,55 +14,52 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .day-map {
-            height: 300px;
-            width: 100%;
-            border-radius: 1rem;
-            z-index: 1;
-        }
+        .day-map { height: 300px; width: 100%; border-radius: 1rem; z-index: 1; }
 
         .expense-input {
-            width: 90px;
-            padding: 2px 6px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            text-align: right;
-            transition: border-color 0.2s;
-            background: #f8fafc;
+            width: 90px; padding: 2px 6px; border: 1px solid #e2e8f0;
+            border-radius: 6px; font-size: 0.8rem; text-align: right;
+            transition: border-color 0.2s; background: #f8fafc;
         }
         .expense-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-            background: #fff;
+            outline: none; border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); background: #fff;
         }
 
         .budget-bar-fill { transition: width 0.5s ease; }
         .map-toggle-btn { cursor: pointer; transition: all 0.2s; }
         .map-toggle-btn:hover { transform: scale(1.05); }
 
-        .map-container {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.4s ease;
-        }
-        .map-container.open {
-            max-height: 400px;
-            padding-top: 12px;
-            padding-bottom: 12px;
-        }
+        .map-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; }
+        .map-container.open { max-height: 400px; padding-top: 12px; padding-bottom: 12px; }
 
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Chat panel */
+        .chat-panel {
+            position: fixed; right: 0; top: 60px; bottom: 0; width: 400px; max-width: 100vw;
+            background: white; border-left: 1px solid #e2e8f0; z-index: 30;
+            transform: translateX(100%); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .chat-panel.open { transform: translateX(0); }
+
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
+        .chat-bubble-ai { background: #f1f5f9; border-radius: 16px 16px 16px 4px; padding: 12px 16px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.6; }
+        .chat-bubble-user { background: #1e293b; color: white; border-radius: 16px 16px 4px 16px; padding: 12px 16px; margin-bottom: 12px; margin-left: auto; max-width: 85%; font-size: 0.9rem; }
+
+        .chat-bubble-ai p { margin-bottom: 8px; }
+        .chat-bubble-ai p:last-child { margin-bottom: 0; }
+        .chat-bubble-ai strong { font-weight: 700; }
+        .chat-bubble-ai ul, .chat-bubble-ai ol { padding-left: 20px; margin-bottom: 8px; }
+        .chat-bubble-ai li { margin-bottom: 4px; }
+
+        .chat-typing { display: flex; gap: 4px; padding: 12px 16px; }
+        .chat-typing span { width: 8px; height: 8px; background: #94a3b8; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -74,18 +71,21 @@
                 <i data-lucide="plane" class="text-blue-400"></i>
                 <span class="font-bold text-lg tracking-tight">AI Trip Planner</span>
             </div>
-            <button onclick="showDashboard()" class="text-sm font-medium hover:text-blue-400 transition-colors">My Trips</button>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleChat()" id="chat-toggle-btn" class="text-sm font-medium hover:text-amber-400 transition-colors flex items-center gap-1.5" title="AI Research Assistant">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i> <span class="hidden sm:inline">Research</span>
+                </button>
+                <button onclick="showDashboard()" class="text-sm font-medium hover:text-blue-400 transition-colors">My Trips</button>
+            </div>
         </div>
     </nav>
 
     <!-- App Container -->
-    <div id="app-container">
-        <!-- Dashboard & Trip Content will be injected here -->
-    </div>
+    <div id="app-container"></div>
 
     <!-- AI Generation Modal -->
     <div id="ai-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform scale-95 transition-transform duration-300" id="ai-modal-content">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden transform scale-95 transition-transform duration-300 relative" id="ai-modal-content">
             <div class="p-6 sm:p-8">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -93,7 +93,7 @@
                     </h2>
                     <button onclick="closeAIModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Destination</label>
@@ -111,7 +111,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Preferences & Budget</label>
-                        <textarea id="ai-prefs" rows="3" placeholder="e.g., Moderate budget, focus on food and nature, minimal hiking, budget around $2000 SGD." class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                        <textarea id="ai-prefs" rows="3" placeholder="e.g., Moderate budget, focus on food and nature, budget around $2000 SGD." class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                     </div>
                 </div>
 
@@ -122,9 +122,9 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Loading Overlay inside Modal -->
-            <div id="ai-loading" class="absolute inset-0 bg-blue-600 flex flex-col items-center justify-center text-white hidden">
+            <div id="ai-loading" class="absolute inset-0 bg-blue-600 flex flex-col items-center justify-center text-white hidden rounded-3xl">
                 <div class="spinner mb-4"></div>
                 <h3 class="text-xl font-bold mb-2">AI is researching...</h3>
                 <p class="text-blue-200 text-sm text-center px-8" id="loading-msg">Finding the best spots, calculating budgets, and mapping coordinates.</p>
@@ -132,92 +132,290 @@
         </div>
     </div>
 
-    <script>
-        // --- CONFIGURATION ---
-        // IMPORTANT: Leave apiKey as an empty string to automatically use the environment's built-in key. 
-        // If you populate this with an invalid key, the API will return a 401 error.
-        const apiKey = "AIzaSyAM3HR3mD1UCk73cB-_A_BoPZUo6krDcfg";
+    <!-- AI Research Chat Panel -->
+    <div id="chat-panel" class="chat-panel">
+        <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-white">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> AI Research
+            </h3>
+            <button onclick="toggleChat()" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
 
-        // Static classes mapping for Tailwind
+        <div id="chat-messages" class="chat-messages">
+            <div class="chat-bubble-ai">
+                <p>Hey! I'm your travel research assistant. Ask me anything about your trip -- restaurant recommendations, logistics tips, budget estimates, or activity ideas.</p>
+                <p>If you have a trip open, I'll use that context to give more tailored suggestions.</p>
+            </div>
+        </div>
+
+        <div class="p-3 border-t border-slate-200 bg-white">
+            <form onsubmit="sendChatMessage(event)" class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Ask about restaurants, activities, tips..."
+                    class="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                <button type="submit" class="bg-slate-900 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-colors shrink-0">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // CONFIGURATION
+        // =====================================================================
+        // Detect if running inside Google Apps Script (google.script.run exists)
+        const IS_APPS_SCRIPT = (typeof google !== 'undefined' && google.script && google.script.run);
+
+        // Fallback API key for standalone mode (direct browser usage).
+        // Leave empty to skip standalone AI features; set a key to enable them.
+        const FALLBACK_API_KEY = '';
+
+        // =====================================================================
+        // Theme styles
+        // =====================================================================
         const themeStyles = {
-            pink: { btnActive: "bg-pink-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-pink-500", badge: "bg-pink-100 text-pink-700 border-pink-200", headerGrad: "from-pink-50", textMain: "text-pink-600", timelineIconNode: "border-pink-400 text-pink-500", mapMarker: "#ec4899" },
+            pink:   { btnActive: "bg-pink-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-pink-500", badge: "bg-pink-100 text-pink-700 border-pink-200", headerGrad: "from-pink-50", textMain: "text-pink-600", timelineIconNode: "border-pink-400 text-pink-500", mapMarker: "#ec4899" },
             orange: { btnActive: "bg-orange-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-orange-500", badge: "bg-orange-100 text-orange-700 border-orange-200", headerGrad: "from-orange-50", textMain: "text-orange-600", timelineIconNode: "border-orange-400 text-orange-500", mapMarker: "#f97316" },
             purple: { btnActive: "bg-purple-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-purple-500", badge: "bg-purple-100 text-purple-700 border-purple-200", headerGrad: "from-purple-50", textMain: "text-purple-600", timelineIconNode: "border-purple-400 text-purple-500", mapMarker: "#a855f7" },
-            blue: { btnActive: "bg-blue-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-blue-500", badge: "bg-blue-100 text-blue-700 border-blue-200", headerGrad: "from-blue-50", textMain: "text-blue-600", timelineIconNode: "border-blue-400 text-blue-500", mapMarker: "#3b82f6" },
-            green: { btnActive: "bg-green-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-green-500", badge: "bg-green-100 text-green-700 border-green-200", headerGrad: "from-green-50", textMain: "text-green-600", timelineIconNode: "border-green-400 text-green-500", mapMarker: "#22c55e" }
+            blue:   { btnActive: "bg-blue-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-blue-500", badge: "bg-blue-100 text-blue-700 border-blue-200", headerGrad: "from-blue-50", textMain: "text-blue-600", timelineIconNode: "border-blue-400 text-blue-500", mapMarker: "#3b82f6" },
+            green:  { btnActive: "bg-green-500 text-white shadow-md", iconActive: "text-white", iconInactive: "text-green-500", badge: "bg-green-100 text-green-700 border-green-200", headerGrad: "from-green-50", textMain: "text-green-600", timelineIconNode: "border-green-400 text-green-500", mapMarker: "#22c55e" },
         };
 
-        // --- DATA & STATE MANAGEMENT ---
+        // =====================================================================
+        // Sample trip template (East Asia Spring Escape)
+        // =====================================================================
+        const SAMPLE_TRIP = {
+            id: "sample_east_asia_2026",
+            overview: { title: "East Asia Spring Escape", dates: "April 14 - April 24, 2026", totalBudget: "$2,916 SGD (Base Flights + Accomm)" },
+            budget: [
+                { item: "Flights (SG <> JP/KR + Inter-city)", cost: "$1,098", amount: 1098, icon: "plane-takeoff" },
+                { item: "Tokyo: Dai-ichi Hotel (5 Nights)", cost: "$1,055", amount: 1055, icon: "bed-double" },
+                { item: "Jeju: Airbnb (3 Nights)", cost: "$482", amount: 482, icon: "palmtree" },
+                { item: "Seoul: Mercure Hongdae (2 Nights)", cost: "$281", amount: 281, icon: "bed-double" },
+            ],
+            locations: [
+                { id: "tokyo", name: "Tokyo", color: "pink", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1000&q=80" },
+                { id: "jeju", name: "Jeju Island", color: "orange", image: "https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=1000&q=80" },
+                { id: "seoul", name: "Seoul", color: "purple", image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=1000&q=80" },
+            ],
+            itinerary: [
+                { day: 1, date: "Apr 14 (Tue)", location: "tokyo", title: "Arrival in Japan", events: [
+                    { time: "1:55 PM", desc: "Depart Singapore <span class='block text-sm font-normal text-slate-500 mt-1'>Ensure you have your Visit Japan Web QR codes ready for swift immigration.</span>", icon: "plane-takeoff", expense: 0 },
+                    { time: "9:55 PM", desc: "Arrive at Tokyo Haneda Airport <span class='block text-sm font-normal text-slate-500 mt-1'>Navigate to the Tokyo Monorail or Keikyu Line for transit into the city.</span>", icon: "plane-landing", link: "https://www.google.com/maps/search/?api=1&query=Haneda+Airport", latlng: [35.5494, 139.7798], expense: 0 },
+                    { time: "11:00 PM", desc: "Check-in: Dai-ichi Hotel Tokyo (Shimbashi) <span class='block text-sm font-normal text-slate-500 mt-1'>Excellent base location with direct connections to the Yamanote Line.</span>", icon: "bed-double", link: "https://www.agoda.com/dai-ichi-hotel-tokyo/hotel/tokyo-jp.html", latlng: [35.6656, 139.7581], expense: 0 },
+                ]},
+                { day: 2, date: "Apr 15 (Wed)", location: "tokyo", title: "Coffee, Akihabara & Ginza", events: [
+                    { time: "11:00 AM", desc: "Coffee Omakase @ Koffee Mameya Kakeru <span class='block text-sm font-normal text-slate-500 mt-1'>A highly curated coffee tasting journey exploring different premium roasts and brewing techniques.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Koffee+Mameya+Kakeru+Tokyo", latlng: [35.6615, 139.7106], expense: 0 },
+                    { time: "1:00 PM", desc: "Lunch @ Gyukatsu Ichi Ni San <span class='block text-sm font-normal text-slate-500 mt-1'>Famous for melt-in-your-mouth breaded beef cutlets you sear on your own personal hot stone.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Gyukatsu+Ichi+Ni+San+Akihabara", latlng: [35.6984, 139.7731], expense: 0 },
+                    { time: "2:30 PM", desc: "Explore Akihabara <span class='block text-sm font-normal text-slate-500 mt-1'>Japan's vibrant epicenter for otaku culture, retro gaming, and electronics.</span>", icon: "shopping-bag", link: "https://www.google.com/maps/search/?api=1&query=Akihabara+Tokyo", latlng: [35.7023, 139.7745], expense: 0,
+                        subLinks: [
+                            { name: "Trader (Retro Games/Anime)", link: "https://www.google.com/maps/search/?api=1&query=Trader+Akihabara" },
+                            { name: "Lashinbang Radio Kaikan", link: "https://www.google.com/maps/search/?api=1&query=Lashinbang+Radio+Kaikan+Akihabara" },
+                            { name: "AmiAmi (Figures)", link: "https://www.google.com/maps/search/?api=1&query=AmiAmi+Akihabara" },
+                            { name: "GU AKIBA TOLIM", link: "https://www.google.com/maps/search/?api=1&query=GU+Akihabara+Tolim" },
+                        ]},
+                    { time: "5:30 PM", desc: "Daruma Doll Painting <span class='block text-sm font-normal text-slate-500 mt-1'>Paint a traditional Japanese talisman of good luck and perseverance.</span>", icon: "hammer", link: "https://www.klook.com/en-SG/activity/176779-tokyo-create-your-own-daruma-experience/", latlng: [35.6595, 139.7004], expense: 0 },
+                    { time: "7:00 PM", desc: "Dinner @ Ginza <span class='block text-sm font-normal text-slate-500 mt-1'>Check out these tucked-away local favorites:</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Ginza+Tokyo+Restaurants", latlng: [35.6717, 139.7649], expense: 0,
+                        subLinks: [
+                            { name: "Mugi to Olive (Michelin clam broth ramen)", link: "https://www.google.com/maps/search/?api=1&query=Mugi+to+Olive+Ginza" },
+                            { name: "Sato Yosuke (Traditional Inaniwa udon)", link: "https://www.google.com/maps/search/?api=1&query=Sato+Yosuke+Ginza" },
+                        ]},
+                    { time: "9:00 PM", desc: "Return to Hotel", icon: "bed-double", expense: 0 },
+                ]},
+                { day: 3, date: "Apr 16 (Thu)", location: "tokyo", title: "Kamakura Coastal Day Trip", events: [
+                    { time: "9:00 AM", desc: "Tsurugaoka Hachimangu Shrine & Komachi Street <span class='block text-sm font-normal text-slate-500 mt-1'>Kamakura's most important Shinto shrine, approached via a bustling street of traditional snacks.</span>", icon: "map-pin", link: "https://www.google.com/maps/search/?api=1&query=Tsurugaoka+Hachimangu+Shrine+Kamakura", latlng: [35.3260, 139.5565], expense: 0 },
+                    { time: "12:00 PM", desc: "Great Buddha at Kotoku-in & Hasedera Temple <span class='block text-sm font-normal text-slate-500 mt-1'>Marvel at the monumental 13m bronze Buddha and explore Hasedera's stunning hillside gardens.</span>", icon: "camera", link: "https://www.google.com/maps/search/?api=1&query=Kotoku-in+Temple+Kamakura", latlng: [35.3167, 139.5356], expense: 0 },
+                    { time: "2:00 PM", desc: "Late Lunch @ Bills Cafe Shichirigahama <span class='block text-sm font-normal text-slate-500 mt-1'>Famous for ricotta hotcakes with sweeping views of the Pacific Ocean.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Bills+Cafe+Shichirigahama", latlng: [35.3065, 139.5109], expense: 0 },
+                    { time: "4:00 PM", desc: "Shichirigahama Beach <span class='block text-sm font-normal text-slate-500 mt-1'>Relax on the black sand beach. On clear days, you can spot Mount Fuji on the horizon.</span>", icon: "sunset", link: "https://www.google.com/maps/search/?api=1&query=Shichirigahama+Beach", latlng: [35.3048, 139.5064], expense: 0 },
+                    { time: "6:00 PM", desc: "Dinner @ Tokyo Station <span class='block text-sm font-normal text-slate-500 mt-1'>Try these amazing station highlights:</span>", icon: "utensils", latlng: [35.6812, 139.7671], expense: 0,
+                        subLinks: [
+                            { name: "Rokurinsha (Legendary tsukemen)", link: "https://www.google.com/maps/search/?api=1&query=Rokurinsha+Tokyo+Station" },
+                            { name: "Toyama Shiroebitei (White shrimp bowls)", link: "https://www.google.com/maps/search/?api=1&query=Toyama+Shiroebitei+Tokyo+Station" },
+                        ]},
+                ]},
+                { day: 4, date: "Apr 17 (Fri)", location: "tokyo", title: "Kawagoe & Thrifting", events: [
+                    { time: "10:30 AM", desc: "Hikawa Shrine & Kurazukuri Street <span class='block text-sm font-normal text-slate-500 mt-1'>Known as 'Little Edo'. Walk among clay-walled warehouse buildings from the 1800s.</span>", icon: "camera", link: "https://maps.app.goo.gl/ZY1jd33zum3PUW9f7", latlng: [35.9251, 139.4858], expense: 0 },
+                    { time: "12:15 PM", desc: "Lunch @ Kurazukuri Street <span class='block text-sm font-normal text-slate-500 mt-1'>Try local specialties made with Kawagoe's famous sweet potatoes.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Kurazukuri+Street+Kawagoe", latlng: [35.9230, 139.4850], expense: 0 },
+                    { time: "1:30 PM", desc: "Wood Works Kawagoe <span class='block text-sm font-normal text-slate-500 mt-1'>Craft your own set of personalized, traditional Japanese chopsticks.</span>", icon: "hammer", link: "https://www.google.com/maps/search/?api=1&query=Wood+Works+Kawagoe", latlng: [35.9220, 139.4845], expense: 0 },
+                    { time: "3:00 PM", desc: "Kashiya Yokocho <span class='block text-sm font-normal text-slate-500 mt-1'>'Penny Candy Alley' -- a nostalgic street of traditional Japanese sweets.</span>", icon: "shopping-bag", link: "https://maps.app.goo.gl/RSdw3V35vozDsjxb8", latlng: [35.9245, 139.4835], expense: 0 },
+                    { time: "5:00 PM", desc: "Thrift Shopping @ Bookoff Super Bazaar <span class='block text-sm font-normal text-slate-500 mt-1'>Massive secondhand store for cheap clothing, games, and electronics.</span>", icon: "shopping-bag", link: "https://www.google.com/maps/search/?api=1&query=Bookoff+Super+Bazaar+Saitama", latlng: [35.8617, 139.6455], expense: 0 },
+                    { time: "8:00 PM", desc: "Dinner: Miroku Yaesu <span class='block text-sm font-normal text-slate-500 mt-1'>Highly rated offal BBQ (horumon) near Tokyo Station.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Miroku+Yaesu+Tokyo", latlng: [35.6802, 139.7704], expense: 0 },
+                ]},
+                { day: 5, date: "Apr 18 (Sat)", location: "tokyo", title: "Ginza Eats & Onsen", events: [
+                    { time: "10:00 AM", desc: "Dog Cafe (Ginza Cottage & M) <span class='block text-sm font-normal text-slate-500 mt-1'>Start the morning relaxing with furry friends in the heart of Ginza.</span>", icon: "map-pin", link: "https://www.google.com/maps/search/?api=1&query=Ginza+Cottage+M+Tokyo", latlng: [35.6720, 139.7650], expense: 0 },
+                    { time: "12:00 PM", desc: "Lunch: Ginza Hachigou <span class='block text-sm font-normal text-slate-500 mt-1'>Michelin-starred ramen with clear duck and chicken broth.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Ginza+Hachigou", latlng: [35.6710, 139.7630], expense: 0 },
+                    { time: "3:00 PM", desc: "Relax @ Toyosu Manyo Club <span class='block text-sm font-normal text-slate-500 mt-1'>Massive hot spring complex with natural geothermal waters.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Toyosu+Manyo+Club+Onsen", latlng: [35.6473, 139.7907], expense: 0 },
+                ]},
+                { day: 6, date: "Apr 19 (Sun)", location: "jeju", title: "Transit to Jeju", events: [
+                    { time: "12:00 PM", desc: "Check out of Tokyo Hotel", icon: "bed-double", expense: 0 },
+                    { time: "4:35 PM", desc: "Flight from Narita to Jeju", icon: "plane-takeoff", latlng: [35.7719, 140.3929], expense: 0 },
+                    { time: "8:00 PM", desc: "Arrive in Jeju & grab dinner <span class='block text-sm font-normal text-slate-500 mt-1'>Jeju is known for incredible seafood and pork.</span>", icon: "utensils", latlng: [33.5104, 126.4914], expense: 0 },
+                    { time: "9:00 PM", desc: "Transfer to Airbnb", icon: "bed-double", latlng: [33.4890, 126.4983], expense: 0 },
+                ]},
+                { day: 7, date: "Apr 20 (Mon)", location: "jeju", title: "East Jeju Exploring", events: [
+                    { time: "10:00 AM", desc: "Breakfast @ Mou Moon Cafe <span class='block text-sm font-normal text-slate-500 mt-1'>Panoramic ocean views in Woljeongri.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Mou+Moon+Cafe+Jeju", latlng: [33.5562, 126.7296], expense: 0 },
+                    { time: "11:15 AM", desc: "Lunch @ Myeongjin Abalone <span class='block text-sm font-normal text-slate-500 mt-1'>Famous sizzling abalone stone pot rice.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Myeongjin+Abalone+Jeju", latlng: [33.4611, 126.9363], expense: 0 },
+                    { time: "12:30 PM", desc: "Hike Seongsan Ilchulbong <span class='block text-sm font-normal text-slate-500 mt-1'>UNESCO World Heritage hydrovolcanic tuff cone crater.</span>", icon: "camera", link: "https://www.google.com/maps/search/?api=1&query=Seongsan+Ilchulbong+Jeju", latlng: [33.4588, 126.9406], expense: 0 },
+                    { time: "5:30 PM", desc: "Dinner: Black Pork KBBQ <span class='block text-sm font-normal text-slate-500 mt-1'>Jeju's most famous culinary export with Tangerine Makgeolli.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Suksungdo+Jeju", latlng: [33.4996, 126.5312], expense: 0 },
+                ]},
+                { day: 8, date: "Apr 21 (Tue)", location: "jeju", title: "South/West Jeju Wonders", events: [
+                    { time: "10:00 AM", desc: "Tangerine Cafe <span class='block text-sm font-normal text-slate-500 mt-1'>Citrus-themed cafes with photo zones and tangerine desserts.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Gamttanam+Cafe+Jeju", latlng: [33.2897, 126.3620], expense: 0 },
+                    { time: "11:30 AM", desc: "Jusangjeollidae Cliff <span class='block text-sm font-normal text-slate-500 mt-1'>Hexagonal basalt columns plunging into the sea.</span>", icon: "camera", link: "https://www.google.com/maps/search/?api=1&query=Jusangjeollidae+Cliff+Jeju", latlng: [33.2375, 126.4258], expense: 0 },
+                    { time: "1:15 PM", desc: "Cheonjeyeon Waterfall Hike <span class='block text-sm font-normal text-slate-500 mt-1'>'The Pond of God' -- beautiful three-tier waterfall.</span>", icon: "map-pin", link: "https://www.google.com/maps/search/?api=1&query=Cheonjeyeon+Waterfall+Jeju", latlng: [33.2481, 126.4143], expense: 0 },
+                    { time: "2:30 PM", desc: "Osulloc Tea Museum <span class='block text-sm font-normal text-slate-500 mt-1'>Korea's tea culture overlooking green tea fields.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Osulloc+Tea+Museum+Jeju", latlng: [33.3058, 126.2893], expense: 0 },
+                ]},
+                { day: 9, date: "Apr 22 (Wed)", location: "seoul", title: "Hongdae & Hangang", events: [
+                    { time: "12:00 PM", desc: "Flight from Jeju to Gimpo", icon: "plane-takeoff", latlng: [37.5587, 126.7906], expense: 0 },
+                    { time: "3:30 PM", desc: "Check-in: Mercure Hongdae <span class='block text-sm font-normal text-slate-500 mt-1'>Heart of Seoul's youthful, indie music, and arts district.</span>", icon: "bed-double", link: "https://www.google.com/maps/search/?api=1&query=Mercure+Ambassador+Seoul+Hongdae", latlng: [37.5563, 126.9220], expense: 0 },
+                    { time: "4:00 PM", desc: "Hangang Ramyeon @ Yeouinaru <span class='block text-sm font-normal text-slate-500 mt-1'>Classic Seoul experience: instant noodles by the Han River.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Yeouinaru+Station+Hangang+Park", latlng: [37.5268, 126.9327], expense: 0 },
+                    { time: "7:00 PM", desc: "Dinner @ Hongdae <span class='block text-sm font-normal text-slate-500 mt-1'>Korean fried chicken, dakgalbi, or KBBQ in this lively area.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Hongdae+Seoul", latlng: [37.5563, 126.9237], expense: 0 },
+                ]},
+                { day: 10, date: "Apr 23 (Thu)", location: "seoul", title: "Shopping, Cafes & Pocha", events: [
+                    { time: "11:00 AM", desc: "Explore Apgujeong & Seongsu Cafes <span class='block text-sm font-normal text-slate-500 mt-1'>Seoul's trendiest districts for popup stores and cafe hopping.</span>", icon: "coffee", latlng: [37.5219, 127.0234], expense: 0,
+                        subLinks: [
+                            { name: "Apgujeong Cafe", link: "https://www.google.com/maps/search/?api=1&query=Apgujeong+Cafe+Seoul" },
+                            { name: "Seongsu Cafe", link: "https://www.google.com/maps/search/?api=1&query=Seongsu+Cafe+Seoul" },
+                        ]},
+                    { time: "3:00 PM", desc: "Shopping @ Yongsan iPark Mall <span class='block text-sm font-normal text-slate-500 mt-1'>Fashion, electronics, and anime merchandise.</span>", icon: "shopping-bag", link: "https://www.google.com/maps/search/?api=1&query=Yongsan+iPark+Mall+Seoul", latlng: [37.5283, 126.9654], expense: 0 },
+                    { time: "5:00 PM", desc: "Dinner @ Jongno 3-ga Pocha Street <span class='block text-sm font-normal text-slate-500 mt-1'>Authentic Korean nightlife in traditional orange tent bars.</span>", icon: "utensils", link: "https://www.google.com/maps/search/?api=1&query=Jongno+3-ga+Pocha+Street+Seoul", latlng: [37.5710, 126.9920], expense: 0 },
+                    { time: "7:00 PM", desc: "Lotte Mart Grocery Shopping <span class='block text-sm font-normal text-slate-500 mt-1'>Bulk-buy Korean snacks, ramyeon, and souvenirs at Seoul Station.</span>", icon: "shopping-bag", link: "https://www.google.com/maps/search/?api=1&query=Lotte+Mart+Seoul", latlng: [37.5283, 126.9645], expense: 0 },
+                ]},
+                { day: 11, date: "Apr 24 (Fri)", location: "seoul", title: "Departure", events: [
+                    { time: "10:30 AM", desc: "Hongdae/Yeonnam Cafe Hopping <span class='block text-sm font-normal text-slate-500 mt-1'>Stroll along Gyeongui Line Forest Park for a final coffee.</span>", icon: "coffee", link: "https://www.google.com/maps/search/?api=1&query=Yeonnam-dong+Cafes+Seoul", latlng: [37.5621, 126.9228], expense: 0 },
+                    { time: "2:30 PM", desc: "Head to Incheon Airport <span class='block text-sm font-normal text-slate-500 mt-1'>Take the AREX from Hongik University Station.</span>", icon: "train", link: "https://www.google.com/maps/search/?api=1&query=Incheon+Airport", latlng: [37.4602, 126.4407], expense: 0 },
+                    { time: "4:45 PM", desc: "Flight Home to Singapore", icon: "plane-takeoff", expense: 0 },
+                ]},
+            ],
+        };
+
+        // =====================================================================
+        // State
+        // =====================================================================
         let trips = [];
         let activeTripId = null;
         let activeFilter = 'all';
         let openMaps = new Set();
         let mapInstances = {};
+        let chatOpen = false;
 
+        // =====================================================================
+        // Data layer -- abstracts Apps Script vs localStorage
+        // =====================================================================
         function loadData() {
-            const saved = localStorage.getItem('ai_travel_trips');
-            if (saved) {
-                try { trips = JSON.parse(saved); } catch(e) { trips = []; }
+            if (IS_APPS_SCRIPT) {
+                google.script.run
+                    .withSuccessHandler(function(json) {
+                        trips = JSON.parse(json || '[]');
+                        showDashboard();
+                    })
+                    .withFailureHandler(function(err) {
+                        console.error('Failed to load trips:', err);
+                        trips = [];
+                        showDashboard();
+                    })
+                    .getTrips();
+            } else {
+                const saved = localStorage.getItem('ai_travel_trips');
+                if (saved) { try { trips = JSON.parse(saved); } catch(e) { trips = []; } }
+                showDashboard();
             }
-            showDashboard();
         }
 
         function saveData() {
-            localStorage.setItem('ai_travel_trips', JSON.stringify(trips));
+            if (IS_APPS_SCRIPT) {
+                // Save each trip individually to the sheet
+                trips.forEach(function(trip) {
+                    google.script.run.saveTrip(JSON.stringify(trip));
+                });
+            } else {
+                localStorage.setItem('ai_travel_trips', JSON.stringify(trips));
+            }
         }
 
-        // --- NAVIGATION ---
+        function saveSingleTrip(trip) {
+            if (IS_APPS_SCRIPT) {
+                google.script.run.saveTrip(JSON.stringify(trip));
+            } else {
+                localStorage.setItem('ai_travel_trips', JSON.stringify(trips));
+            }
+        }
+
+        function deleteTripById(tripId) {
+            if (confirm("Are you sure you want to delete this trip?")) {
+                trips = trips.filter(function(t) { return t.id !== tripId; });
+                if (IS_APPS_SCRIPT) {
+                    google.script.run.deleteTrip(tripId);
+                } else {
+                    localStorage.setItem('ai_travel_trips', JSON.stringify(trips));
+                }
+                showDashboard();
+            }
+        }
+
+        // =====================================================================
+        // Navigation
+        // =====================================================================
         function showDashboard() {
             activeTripId = null;
             const container = document.getElementById('app-container');
-            
-            let html = `
-                <main class="max-w-5xl mx-auto px-4 py-12">
-                    <div class="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 class="text-3xl font-extrabold text-slate-900">My Trips</h1>
-                            <p class="text-slate-500 mt-1">Manage and plan your upcoming adventures.</p>
-                        </div>
-                        <button onclick="openAIModal()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2">
-                            <i data-lucide="plus" class="w-5 h-5"></i> New Trip
-                        </button>
-                    </div>
-                    
-                    ${trips.length === 0 ? `
-                        <div class="bg-white border-2 border-dashed border-slate-300 rounded-3xl p-12 text-center">
-                            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                                <i data-lucide="map" class="w-8 h-8"></i>
-                            </div>
-                            <h3 class="text-xl font-bold text-slate-700 mb-2">No trips planned yet</h3>
-                            <p class="text-slate-500 mb-6">Let AI craft the perfect itinerary for your next vacation.</p>
-                            <button onclick="openAIModal()" class="text-blue-600 font-bold hover:underline">Plan your first trip &rarr;</button>
-                        </div>
-                    ` : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${trips.map(trip => `
-                                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group" onclick="openTrip('${trip.id}')">
-                                    <div class="h-40 bg-slate-200 relative overflow-hidden">
-                                        <img src="${trip.locations && trip.locations[0] ? trip.locations[0].image : 'https://picsum.photos/800/400'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>
-                                        <div class="absolute bottom-4 left-4 right-4">
-                                            <h3 class="text-xl font-bold text-white mb-1 line-clamp-1">${trip.overview.title}</h3>
-                                            <p class="text-sm text-slate-200">${trip.overview.dates}</p>
-                                        </div>
-                                    </div>
-                                    <div class="p-5 flex justify-between items-center bg-white">
-                                        <span class="text-sm font-semibold text-slate-500 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i> ${trip.locations.length} Locations</span>
-                                        <button class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors" onclick="event.stopPropagation(); deleteTrip('${trip.id}')">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
-                </main>
-            `;
-            container.innerHTML = html;
+
+            let tripCards = '';
+            if (trips.length === 0) {
+                tripCards = '<div class="bg-white border-2 border-dashed border-slate-300 rounded-3xl p-12 text-center">' +
+                    '<div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400"><i data-lucide="map" class="w-8 h-8"></i></div>' +
+                    '<h3 class="text-xl font-bold text-slate-700 mb-2">No trips planned yet</h3>' +
+                    '<p class="text-slate-500 mb-6">Let AI craft the perfect itinerary for your next vacation.</p>' +
+                    '<button onclick="openAIModal()" class="text-blue-600 font-bold hover:underline">Plan your first trip &rarr;</button>' +
+                    '</div>';
+            } else {
+                tripCards = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
+                trips.forEach(function(trip) {
+                    var img = (trip.locations && trip.locations[0]) ? trip.locations[0].image : 'https://picsum.photos/800/400';
+                    tripCards += '<div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group" onclick="openTrip(\'' + trip.id + '\')">' +
+                        '<div class="h-40 bg-slate-200 relative overflow-hidden">' +
+                            '<img src="' + img + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">' +
+                            '<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent"></div>' +
+                            '<div class="absolute bottom-4 left-4 right-4">' +
+                                '<h3 class="text-xl font-bold text-white mb-1 line-clamp-1">' + trip.overview.title + '</h3>' +
+                                '<p class="text-sm text-slate-200">' + trip.overview.dates + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="p-5 flex justify-between items-center bg-white">' +
+                            '<span class="text-sm font-semibold text-slate-500 flex items-center gap-1"><i data-lucide="map-pin" class="w-4 h-4"></i> ' + trip.locations.length + ' Locations</span>' +
+                            '<button class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors" onclick="event.stopPropagation(); deleteTripById(\'' + trip.id + '\')">' +
+                                '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>';
+                });
+                tripCards += '</div>';
+            }
+
+            container.innerHTML = '<main class="max-w-5xl mx-auto px-4 py-12">' +
+                '<div class="flex items-center justify-between mb-8">' +
+                    '<div><h1 class="text-3xl font-extrabold text-slate-900">My Trips</h1><p class="text-slate-500 mt-1">Manage and plan your upcoming adventures.</p></div>' +
+                    '<div class="flex gap-2">' +
+                        '<button onclick="importSampleTrip()" class="bg-white text-slate-700 border border-slate-300 px-4 py-2.5 rounded-xl font-bold hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Import Sample</button>' +
+                        '<button onclick="openAIModal()" class="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-800 transition-colors flex items-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> New Trip</button>' +
+                    '</div>' +
+                '</div>' +
+                tripCards +
+            '</main>';
             lucide.createIcons();
+        }
+
+        function importSampleTrip() {
+            // Check if already imported
+            if (trips.find(function(t) { return t.id === SAMPLE_TRIP.id; })) {
+                alert('The East Asia Spring Escape trip is already in your list.');
+                return;
+            }
+            var tripCopy = JSON.parse(JSON.stringify(SAMPLE_TRIP));
+            trips.unshift(tripCopy);
+            saveSingleTrip(tripCopy);
+            showDashboard();
         }
 
         function openTrip(id) {
@@ -228,259 +426,261 @@
             renderTripView();
         }
 
-        function deleteTrip(id) {
-            if(confirm("Are you sure you want to delete this trip?")) {
-                trips = trips.filter(t => t.id !== id);
-                saveData();
-                showDashboard();
-            }
-        }
-
-        // --- AI MODAL LOGIC ---
+        // =====================================================================
+        // AI Modal
+        // =====================================================================
         function openAIModal() {
-            const modal = document.getElementById('ai-modal');
+            var modal = document.getElementById('ai-modal');
             modal.classList.remove('hidden');
-            setTimeout(() => {
+            setTimeout(function() {
                 modal.classList.remove('opacity-0');
                 document.getElementById('ai-modal-content').classList.remove('scale-95');
             }, 10);
         }
 
         function closeAIModal() {
-            const modal = document.getElementById('ai-modal');
+            var modal = document.getElementById('ai-modal');
             modal.classList.add('opacity-0');
             document.getElementById('ai-modal-content').classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
+            setTimeout(function() { modal.classList.add('hidden'); }, 300);
             document.getElementById('ai-loading').classList.add('hidden');
         }
 
-        const msgs = ["Consulting local guides...", "Mapping out coordinates...", "Estimating budgets...", "Finding the best coffee..."];
-        let msgInterval;
+        var loadingMsgs = ["Consulting local guides...", "Mapping out coordinates...", "Estimating budgets...", "Finding the best coffee..."];
+        var msgInterval;
 
         async function generateTrip() {
-            const dest = document.getElementById('ai-dest').value;
-            const start = document.getElementById('ai-start').value;
-            const end = document.getElementById('ai-end').value;
-            const prefs = document.getElementById('ai-prefs').value;
+            var dest = document.getElementById('ai-dest').value;
+            var startDate = document.getElementById('ai-start').value;
+            var endDate = document.getElementById('ai-end').value;
+            var prefs = document.getElementById('ai-prefs').value;
 
-            if(!dest || !start || !end) {
+            if (!dest || !startDate || !endDate) {
                 alert("Please fill in destination and dates.");
                 return;
             }
 
-            // UI Loading state
+            // Show loading
             document.getElementById('ai-loading').classList.remove('hidden');
-            let mIdx = 0;
-            msgInterval = setInterval(() => {
-                document.getElementById('loading-msg').innerText = msgs[mIdx % msgs.length];
+            var mIdx = 0;
+            msgInterval = setInterval(function() {
+                document.getElementById('loading-msg').innerText = loadingMsgs[mIdx % loadingMsgs.length];
                 mIdx++;
             }, 2500);
 
-            const systemPrompt = `You are an expert travel planner. Create a highly detailed travel itinerary. Respond ONLY with a raw JSON object matching exactly the requested structure. Generate at least 3 days of events, and assign a realistic 'expense' cost (in SGD) to relevant events. Provide REAL latitude/longitude for 'latlng' arrays.`;
-            const userQuery = `
-Destination: ${dest}
-Start Date: ${start}
-End Date: ${end}
-User Preferences: ${prefs}
+            var payload = { destination: dest, startDate: startDate, endDate: endDate, preferences: prefs };
 
-Required JSON Structure:
-{
-    "id": "${Date.now().toString()}",
-    "overview": {
-        "title": "A catchy title for ${dest}",
-        "dates": "${start} to ${end}",
-        "totalBudget": "Base flights/accomm estimate"
-    },
-    "budget": [
-        { "item": "Flights", "cost": "$...", "amount": 1000, "icon": "plane-takeoff" },
-        { "item": "Hotel", "cost": "$...", "amount": 800, "icon": "bed-double" }
-    ],
-    "locations": [
-        { "id": "loc1", "name": "Primary City Name", "color": "pink", "image": "https://picsum.photos/seed/${dest.replace(/\s/g, '')}1/1000/600" }
-    ],
-    "itinerary": [
-        {
-            "day": 1, 
-            "date": "Day 1 Date", 
-            "location": "loc1", 
-            "title": "Arrival & Exploration",
-            "events": [
-                { "time": "10:00 AM", "desc": "Event description <span class='block text-sm font-normal text-slate-500 mt-1'>Helpful tip</span>", "icon": "map-pin", "expense": 15, "latlng": [1.3521, 103.8198] }
-            ]
+            if (IS_APPS_SCRIPT) {
+                // Use server-side Gemini call (API key stays on server)
+                google.script.run
+                    .withSuccessHandler(function(jsonStr) {
+                        clearInterval(msgInterval);
+                        try {
+                            var newTrip = JSON.parse(jsonStr);
+                            trips.unshift(newTrip);
+                            closeAIModal();
+                            openTrip(newTrip.id);
+                        } catch(e) {
+                            alert("Failed to parse AI response. Please try again.");
+                            document.getElementById('ai-loading').classList.add('hidden');
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        clearInterval(msgInterval);
+                        alert(err.message || "Failed to generate trip. Check that GEMINI_API_KEY is set in Script Properties.");
+                        document.getElementById('ai-loading').classList.add('hidden');
+                    })
+                    .generateTripWithAI(payload);
+            } else {
+                // Standalone fallback: direct Gemini API call
+                await generateTripStandalone(payload);
+            }
         }
-    ]
-}
-Make sure 'color' in locations is one of: pink, orange, purple, blue, green.
-Make sure 'icon' is a valid standard lucide icon name.
-`;
+
+        /** Standalone fallback when not running in Apps Script */
+        async function generateTripStandalone(payload) {
+            if (!FALLBACK_API_KEY) {
+                clearInterval(msgInterval);
+                alert("No API key configured. Deploy via Google Apps Script or set FALLBACK_API_KEY in the source.");
+                document.getElementById('ai-loading').classList.add('hidden');
+                return;
+            }
+
+            var tripId = Date.now().toString();
+            var dest = payload.destination;
+
+            var systemPrompt = 'You are an expert travel planner. Create a highly detailed travel itinerary. Respond ONLY with a raw JSON object. Generate at least 3 days of events with realistic expense costs in SGD and real lat/lng coordinates.';
+            var userQuery = 'Destination: ' + dest + '\nStart Date: ' + payload.startDate + '\nEnd Date: ' + payload.endDate + '\nPreferences: ' + (payload.preferences || 'None') +
+                '\n\nRequired JSON: {"id":"' + tripId + '","overview":{"title":"...","dates":"...","totalBudget":"..."},"budget":[{"item":"...","cost":"$...","amount":1000,"icon":"plane-takeoff"}],"locations":[{"id":"loc1","name":"...","color":"pink","image":"https://picsum.photos/seed/' + dest.replace(/\s/g,'') + '1/1000/600"}],"itinerary":[{"day":1,"date":"...","location":"loc1","title":"...","events":[{"time":"10:00 AM","desc":"...","icon":"map-pin","expense":15,"latlng":[0,0]}]}]}' +
+                '\nColors must be one of: pink, orange, purple, blue, green. Icons must be valid lucide icon names.';
 
             try {
-                const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + FALLBACK_API_KEY, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: userQuery }] }],
                         systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { 
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    id: { type: "STRING" },
-                                    overview: {
-                                        type: "OBJECT",
-                                        properties: {
-                                            title: { type: "STRING" },
-                                            dates: { type: "STRING" },
-                                            totalBudget: { type: "STRING" }
-                                        }
-                                    },
-                                    budget: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                item: { type: "STRING" },
-                                                cost: { type: "STRING" },
-                                                amount: { type: "INTEGER" },
-                                                icon: { type: "STRING" }
-                                            }
-                                        }
-                                    },
-                                    locations: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                id: { type: "STRING" },
-                                                name: { type: "STRING" },
-                                                color: { type: "STRING" },
-                                                image: { type: "STRING" }
-                                            }
-                                        }
-                                    },
-                                    itinerary: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                day: { type: "INTEGER" },
-                                                date: { type: "STRING" },
-                                                location: { type: "STRING" },
-                                                title: { type: "STRING" },
-                                                events: {
-                                                    type: "ARRAY",
-                                                    items: {
-                                                        type: "OBJECT",
-                                                        properties: {
-                                                            time: { type: "STRING" },
-                                                            desc: { type: "STRING" },
-                                                            icon: { type: "STRING" },
-                                                            expense: { type: "INTEGER" },
-                                                            latlng: {
-                                                                type: "ARRAY",
-                                                                items: { type: "NUMBER" }
-                                                            },
-                                                            link: { type: "STRING" }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        generationConfig: { responseMimeType: "application/json" }
                     })
                 });
 
-                const data = await response.json();
-                const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if(!jsonText) throw new Error("No response from AI");
+                if (!response.ok) throw new Error('API returned status ' + response.status);
+                var data = await response.json();
+                var jsonText = data.candidates && data.candidates[0] && data.candidates[0].content.parts[0].text;
+                if (!jsonText) throw new Error("No response from AI");
 
-                // Parse the response
-                const newTrip = JSON.parse(jsonText);
-                trips.unshift(newTrip); // Add to beginning
+                var newTrip = JSON.parse(jsonText);
+                trips.unshift(newTrip);
                 saveData();
-                
                 clearInterval(msgInterval);
                 closeAIModal();
                 openTrip(newTrip.id);
-
             } catch (error) {
                 console.error(error);
                 clearInterval(msgInterval);
-                alert(error.message || "Failed to generate trip. Please try again.");
+                alert(error.message || "Failed to generate trip.");
                 document.getElementById('ai-loading').classList.add('hidden');
             }
         }
 
-        // Retry logic for API calls with Exponential Backoff
-        async function fetchWithRetry(url, options) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            for (let i = 0; i < delays.length; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        // Throw a specific error for 401/403 so it stops retrying and alerts the user immediately
-                        if (response.status === 401 || response.status === 403) {
-                            throw new Error(`Authentication Error (${response.status}): If you provided a custom API key, it is likely invalid. To use the built-in key, please ensure 'const apiKey = "";' is kept entirely empty.`);
-                        }
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response;
-                } catch (e) {
-                    // Do not retry on auth errors
-                    if (e.message.includes("Authentication Error") || i === delays.length - 1) {
-                        throw e;
-                    }
-                    await new Promise(res => setTimeout(res, delays[i]));
+        // =====================================================================
+        // AI Research Chat
+        // =====================================================================
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+        }
+
+        function sendChatMessage(e) {
+            e.preventDefault();
+            var input = document.getElementById('chat-input');
+            var message = input.value.trim();
+            if (!message) return;
+
+            var messagesDiv = document.getElementById('chat-messages');
+
+            // Add user message
+            messagesDiv.innerHTML += '<div class="chat-bubble-user">' + escapeHtml(message) + '</div>';
+            input.value = '';
+
+            // Add typing indicator
+            messagesDiv.innerHTML += '<div id="typing-indicator" class="chat-typing"><span></span><span></span><span></span></div>';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Build trip context if a trip is open
+            var tripContext = '';
+            if (activeTripId) {
+                var trip = trips.find(function(t) { return t.id === activeTripId; });
+                if (trip) {
+                    tripContext = trip.overview.title + ' (' + trip.overview.dates + '). Locations: ' +
+                        trip.locations.map(function(l) { return l.name; }).join(', ') + '.';
                 }
+            }
+
+            if (IS_APPS_SCRIPT) {
+                google.script.run
+                    .withSuccessHandler(function(reply) {
+                        removeTypingIndicator();
+                        appendAIReply(reply);
+                    })
+                    .withFailureHandler(function(err) {
+                        removeTypingIndicator();
+                        appendAIReply('Sorry, something went wrong: ' + (err.message || 'Unknown error'));
+                    })
+                    .chatWithAI({ message: message, tripContext: tripContext });
+            } else {
+                // Standalone fallback
+                chatStandalone(message, tripContext);
             }
         }
 
-        // --- TRIP VIEW RENDER LOGIC ---
-        function renderTripView() {
-            const trip = trips.find(t => t.id === activeTripId);
-            if(!trip) return showDashboard();
+        async function chatStandalone(message, tripContext) {
+            if (!FALLBACK_API_KEY) {
+                removeTypingIndicator();
+                appendAIReply('AI chat requires either deploying via Google Apps Script or setting a FALLBACK_API_KEY. You can still use all other features!');
+                return;
+            }
 
-            const container = document.getElementById('app-container');
-            
-            let html = `
-                <header class="bg-white border-b border-slate-200 sticky top-[60px] z-10 shadow-sm">
-                    <div class="max-w-5xl mx-auto px-4 py-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">${trip.overview.title}</h1>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-4 text-sm text-slate-500 font-medium" id="header-meta">
-                            <!-- Injected by renderHeaderMeta -->
-                        </div>
-                        <div class="flex overflow-x-auto gap-2 mt-6 pb-2 no-scrollbar" id="filter-nav">
-                            <!-- Filters -->
-                        </div>
-                    </div>
-                </header>
-                <main class="max-w-5xl mx-auto px-4 py-8" id="main-content">
-                    <!-- Dynamic content -->
-                </main>
-            `;
-            container.innerHTML = html;
-            
+            var userMsg = message;
+            if (tripContext) userMsg = 'Trip context: ' + tripContext + '\n\nQuestion: ' + message;
+
+            try {
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + FALLBACK_API_KEY, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userMsg }] }],
+                        systemInstruction: { parts: [{ text: 'You are a helpful travel research assistant. Be specific, practical, include real place names and costs in SGD. Keep responses concise (under 300 words).' }] },
+                    })
+                });
+                var data = await response.json();
+                var text = data.candidates[0].content.parts[0].text;
+                removeTypingIndicator();
+                appendAIReply(text);
+            } catch (err) {
+                removeTypingIndicator();
+                appendAIReply('Sorry, could not reach the AI. Please try again.');
+            }
+        }
+
+        function removeTypingIndicator() {
+            var el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function appendAIReply(text) {
+            var messagesDiv = document.getElementById('chat-messages');
+            // Simple markdown-to-html: bold, bullets, paragraphs
+            var html = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^\* (.+)$/gm, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+            messagesDiv.innerHTML += '<div class="chat-bubble-ai"><p>' + html + '</p></div>';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            lucide.createIcons();
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // =====================================================================
+        // Trip View
+        // =====================================================================
+        function renderTripView() {
+            var trip = trips.find(function(t) { return t.id === activeTripId; });
+            if (!trip) return showDashboard();
+
+            var container = document.getElementById('app-container');
+            container.innerHTML = '<header class="bg-white border-b border-slate-200 sticky top-[60px] z-10 shadow-sm">' +
+                '<div class="max-w-5xl mx-auto px-4 py-6">' +
+                    '<div class="flex items-center justify-between mb-2">' +
+                        '<h1 class="text-3xl font-extrabold tracking-tight text-slate-900">' + trip.overview.title + '</h1>' +
+                    '</div>' +
+                    '<div class="flex flex-wrap items-center gap-4 text-sm text-slate-500 font-medium" id="header-meta"></div>' +
+                    '<div class="flex overflow-x-auto gap-2 mt-6 pb-2 no-scrollbar" id="filter-nav"></div>' +
+                '</div>' +
+            '</header>' +
+            '<main class="max-w-5xl mx-auto px-4 py-8" id="main-content"></main>';
             updateTripContent();
         }
 
         function updateTripContent() {
-            const trip = trips.find(t => t.id === activeTripId);
+            var trip = trips.find(function(t) { return t.id === activeTripId; });
+            if (!trip) return;
             renderFilters(trip);
-            
-            let mainHtml = '';
+
+            var mainHtml = '';
             if (activeFilter === 'all') {
                 mainHtml += renderBudget(trip);
             } else {
                 mainHtml += renderHero(trip);
             }
-
             mainHtml += renderExpenseSummary(trip);
             mainHtml += renderTimeline(trip);
 
@@ -491,321 +691,252 @@ Make sure 'icon' is a valid standard lucide icon name.
 
         function setFilter(filterId) {
             activeFilter = filterId;
-            Object.values(mapInstances).forEach(m => m.remove());
+            Object.values(mapInstances).forEach(function(m) { m.remove(); });
             mapInstances = {};
             openMaps.clear();
             updateTripContent();
         }
 
-        // Calculation helpers relative to active trip
+        // =====================================================================
+        // Calculation helpers
+        // =====================================================================
         function getTotalActivityExpenses(trip) {
-            return trip.itinerary.reduce((sum, day) => sum + day.events.reduce((s, e) => s + (e.expense || 0), 0), 0);
+            return trip.itinerary.reduce(function(sum, day) {
+                return sum + day.events.reduce(function(s, e) { return s + (e.expense || 0); }, 0);
+            }, 0);
         }
         function getDayExpenses(trip, dayNum) {
-            const day = trip.itinerary.find(d => d.day === dayNum);
-            return day ? day.events.reduce((sum, e) => sum + (e.expense || 0), 0) : 0;
+            var day = trip.itinerary.find(function(d) { return d.day === dayNum; });
+            return day ? day.events.reduce(function(sum, e) { return sum + (e.expense || 0); }, 0) : 0;
         }
         function getLocationExpenses(trip, locId) {
-            return trip.itinerary.filter(d => d.location === locId)
-                .reduce((sum, day) => sum + day.events.reduce((s, e) => s + (e.expense || 0), 0), 0);
+            return trip.itinerary.filter(function(d) { return d.location === locId; })
+                .reduce(function(sum, day) { return sum + day.events.reduce(function(s, e) { return s + (e.expense || 0); }, 0); }, 0);
         }
         function getBaseBudgetTotal(trip) {
-            return trip.budget.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+            return trip.budget.reduce(function(sum, b) { return sum + (Number(b.amount) || 0); }, 0);
         }
 
+        // =====================================================================
+        // Render functions
+        // =====================================================================
         function renderHeaderMeta(trip) {
-            const activityTotal = getTotalActivityExpenses(trip);
-            const baseTotal = getBaseBudgetTotal(trip);
-            const grandTotal = baseTotal + activityTotal;
-            document.getElementById('header-meta').innerHTML = `
-                <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> ${trip.overview.dates}</span>
-                <span class="flex items-center gap-1.5"><i data-lucide="credit-card" class="w-4 h-4"></i> Base: $${baseTotal.toLocaleString()}</span>
-                <span class="flex items-center gap-1.5"><i data-lucide="wallet" class="w-4 h-4"></i> Activities: $${activityTotal.toLocaleString()}</span>
-                <span class="flex items-center gap-1.5 font-bold text-slate-700"><i data-lucide="calculator" class="w-4 h-4"></i> Total: $${grandTotal.toLocaleString()}</span>
-            `;
+            var activityTotal = getTotalActivityExpenses(trip);
+            var baseTotal = getBaseBudgetTotal(trip);
+            var grandTotal = baseTotal + activityTotal;
+            document.getElementById('header-meta').innerHTML =
+                '<span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-4 h-4"></i> ' + trip.overview.dates + '</span>' +
+                '<span class="flex items-center gap-1.5"><i data-lucide="credit-card" class="w-4 h-4"></i> Base: $' + baseTotal.toLocaleString() + '</span>' +
+                '<span class="flex items-center gap-1.5"><i data-lucide="wallet" class="w-4 h-4"></i> Activities: $' + activityTotal.toLocaleString() + '</span>' +
+                '<span class="flex items-center gap-1.5 font-bold text-slate-700"><i data-lucide="calculator" class="w-4 h-4"></i> Total: $' + grandTotal.toLocaleString() + '</span>';
             lucide.createIcons({ attrs: { class: ['w-4', 'h-4'] } });
         }
 
         function renderFilters(trip) {
-            const navContainer = document.getElementById('filter-nav');
-            let html = `
-                <button onclick="setFilter('all')" class="px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${
-                    activeFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }">Full Itinerary</button>
-            `;
+            var navContainer = document.getElementById('filter-nav');
+            var html = '<button onclick="setFilter(\'all\')" class="px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap ' +
+                (activeFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200') + '">Full Itinerary</button>';
 
-            trip.locations.forEach(loc => {
-                const isActive = activeFilter === loc.id;
-                const theme = themeStyles[loc.color] || themeStyles.blue;
-                const btnClass = isActive ? theme.btnActive : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50';
-                const iconClass = isActive ? theme.iconActive : theme.iconInactive;
-
-                html += `
-                    <button onclick="setFilter('${loc.id}')" class="px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-2 ${btnClass}">
-                        <i data-lucide="map-pin" class="w-4 h-4 ${iconClass}"></i> ${loc.name}
-                    </button>
-                `;
+            trip.locations.forEach(function(loc) {
+                var isActive = activeFilter === loc.id;
+                var theme = themeStyles[loc.color] || themeStyles.blue;
+                var btnClass = isActive ? theme.btnActive : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50';
+                var iconClass = isActive ? theme.iconActive : theme.iconInactive;
+                html += '<button onclick="setFilter(\'' + loc.id + '\')" class="px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap flex items-center gap-2 ' + btnClass + '">' +
+                    '<i data-lucide="map-pin" class="w-4 h-4 ' + iconClass + '"></i> ' + loc.name + '</button>';
             });
             navContainer.innerHTML = html;
         }
 
         function renderBudget(trip) {
-            let html = `
-                <section class="mb-8">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="credit-card" class="text-slate-400 w-6 h-6"></i> Base Estimates</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            `;
-            trip.budget.forEach(item => {
-                html += `
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">
-                        <div class="bg-slate-100 p-2.5 rounded-xl text-slate-600">
-                            <i data-lucide="${item.icon || 'circle-dollar-word'}" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-500 font-medium mb-1">${item.item}</p>
-                            <p class="font-bold text-slate-900">${item.cost}</p>
-                        </div>
-                    </div>
-                `;
+            var html = '<section class="mb-8"><h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="credit-card" class="text-slate-400 w-6 h-6"></i> Base Estimates</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">';
+            trip.budget.forEach(function(item) {
+                html += '<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow">' +
+                    '<div class="bg-slate-100 p-2.5 rounded-xl text-slate-600"><i data-lucide="' + (item.icon || 'circle-dollar-sign') + '" class="w-5 h-5"></i></div>' +
+                    '<div><p class="text-xs text-slate-500 font-medium mb-1">' + item.item + '</p><p class="font-bold text-slate-900">' + item.cost + '</p></div></div>';
             });
-            html += `</div></section>`;
+            html += '</div></section>';
             return html;
         }
 
         function renderHero(trip) {
-            const activeLocation = trip.locations.find(l => l.id === activeFilter);
-            if (!activeLocation) return '';
-            return `
-                <div class="w-full h-64 md:h-80 rounded-3xl overflow-hidden mb-8 relative shadow-lg">
-                    <img src="${activeLocation.image}" alt="${activeLocation.name}" class="w-full h-full object-cover" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
-                        <h2 class="text-4xl font-extrabold text-white">${activeLocation.name}</h2>
-                    </div>
-                </div>
-            `;
+            var loc = trip.locations.find(function(l) { return l.id === activeFilter; });
+            if (!loc) return '';
+            return '<div class="w-full h-64 md:h-80 rounded-3xl overflow-hidden mb-8 relative shadow-lg">' +
+                '<img src="' + loc.image + '" alt="' + loc.name + '" class="w-full h-full object-cover" />' +
+                '<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">' +
+                '<h2 class="text-4xl font-extrabold text-white">' + loc.name + '</h2></div></div>';
         }
 
         function renderExpenseSummary(trip) {
-            const baseTotal = getBaseBudgetTotal(trip);
-            const activityTotal = getTotalActivityExpenses(trip);
-            const grandTotal = baseTotal + activityTotal;
+            var baseTotal = getBaseBudgetTotal(trip);
+            var activityTotal = getTotalActivityExpenses(trip);
+            var grandTotal = baseTotal + activityTotal;
+            var filteredLocs = activeFilter === 'all' ? trip.locations : trip.locations.filter(function(l) { return l.id === activeFilter; });
 
-            const filteredLocations = activeFilter === 'all' ? trip.locations : trip.locations.filter(l => l.id === activeFilter);
-            let locBreakdown = '';
-            
-            filteredLocations.forEach(loc => {
-                const locExp = getLocationExpenses(trip, loc.id);
-                const theme = themeStyles[loc.color] || themeStyles.blue;
-                locBreakdown += `
-                    <div class="flex items-center justify-between py-1.5">
-                        <span class="text-sm font-medium ${theme.textMain} flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${loc.name}</span>
-                        <span class="text-sm font-bold text-slate-700">$${locExp.toLocaleString()}</span>
-                    </div>
-                `;
+            var locBreakdown = '';
+            filteredLocs.forEach(function(loc) {
+                var locExp = getLocationExpenses(trip, loc.id);
+                var theme = themeStyles[loc.color] || themeStyles.blue;
+                locBreakdown += '<div class="flex items-center justify-between py-1.5">' +
+                    '<span class="text-sm font-medium ' + theme.textMain + ' flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ' + loc.name + '</span>' +
+                    '<span class="text-sm font-bold text-slate-700">$' + locExp.toLocaleString() + '</span></div>';
             });
 
-            const filteredActivityTotal = activeFilter === 'all' ? activityTotal : getLocationExpenses(trip, activeFilter);
+            var filteredTotal = activeFilter === 'all' ? activityTotal : getLocationExpenses(trip, activeFilter);
 
-            return `
-                <section class="mb-8">
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-lg font-bold flex items-center gap-2"><i data-lucide="wallet" class="text-blue-500 w-5 h-5"></i> Tracker</h3>
-                            <div class="text-right">
-                                <p class="text-xs text-slate-400">Estimated Activity Spend</p>
-                                <p class="text-2xl font-extrabold text-slate-900">$${filteredActivityTotal.toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden">
-                            <div class="budget-bar-fill h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600" style="width: ${Math.min((activityTotal / (grandTotal || 1)) * 100, 100)}%"></div>
-                        </div>
-                        <div class="border-t border-slate-100 pt-3">${locBreakdown}</div>
-                        ${activeFilter === 'all' ? `
-                        <div class="border-t border-slate-200 mt-3 pt-3 flex items-center justify-between">
-                            <span class="text-sm font-bold text-slate-800">Grand Total</span>
-                            <span class="text-lg font-extrabold text-slate-900">$${grandTotal.toLocaleString()}</span>
-                        </div>` : ''}
-                    </div>
-                </section>
-            `;
+            return '<section class="mb-8"><div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">' +
+                '<div class="flex items-center justify-between mb-3">' +
+                    '<h3 class="text-lg font-bold flex items-center gap-2"><i data-lucide="wallet" class="text-blue-500 w-5 h-5"></i> Expense Tracker</h3>' +
+                    '<div class="text-right"><p class="text-xs text-slate-400">Estimated Activity Spend</p>' +
+                    '<p class="text-2xl font-extrabold text-slate-900">$' + filteredTotal.toLocaleString() + '</p></div></div>' +
+                '<div class="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden">' +
+                    '<div class="budget-bar-fill h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600" style="width: ' + Math.min((activityTotal / (grandTotal || 1)) * 100, 100) + '%"></div></div>' +
+                '<div class="border-t border-slate-100 pt-3">' + locBreakdown + '</div>' +
+                (activeFilter === 'all' ? '<div class="border-t border-slate-200 mt-3 pt-3 flex items-center justify-between">' +
+                    '<span class="text-sm font-bold text-slate-800">Grand Total (Base + Activities)</span>' +
+                    '<span class="text-lg font-extrabold text-slate-900">$' + grandTotal.toLocaleString() + '</span></div>' : '') +
+            '</div></section>';
         }
 
         function renderTimeline(trip) {
-            const filteredItinerary = trip.itinerary.filter(day => activeFilter === 'all' || day.location === activeFilter);
-            if (filteredItinerary.length === 0) return `<div class="text-center py-20"><p class="text-slate-500">No events found.</p></div>`;
+            var filtered = trip.itinerary.filter(function(day) { return activeFilter === 'all' || day.location === activeFilter; });
+            if (filtered.length === 0) return '<div class="text-center py-20"><p class="text-slate-500">No events found.</p></div>';
 
-            let html = '<div class="space-y-8">';
-            filteredItinerary.forEach(day => {
-                const locInfo = trip.locations.find(l => l.id === day.location) || { color: 'blue', name: 'Unknown' };
-                const theme = themeStyles[locInfo.color] || themeStyles.blue;
-                const dayExpense = getDayExpenses(trip, day.day);
-                const hasMapPins = day.events.some(e => e.latlng && e.latlng.length === 2);
+            var html = '<div class="space-y-8">';
+            filtered.forEach(function(day) {
+                var locInfo = trip.locations.find(function(l) { return l.id === day.location; }) || { color: 'blue', name: 'Unknown' };
+                var theme = themeStyles[locInfo.color] || themeStyles.blue;
+                var dayExpense = getDayExpenses(trip, day.day);
+                var hasMapPins = day.events.some(function(e) { return e.latlng && e.latlng.length === 2; });
 
-                html += `
-                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r ${theme.headerGrad} to-white">
-                            <div>
-                                <p class="text-sm font-bold ${theme.textMain} mb-1 flex items-center gap-2">DAY ${day.day} <span class="text-slate-300">•</span> ${day.date}</p>
-                                <h3 class="text-xl font-extrabold text-slate-900">${day.title}</h3>
-                            </div>
-                            <div class="flex flex-wrap justify-end items-center gap-2 sm:gap-3">
-                                <span class="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1.5" data-day-expense="${day.day}">
-                                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i> $${dayExpense}
-                                </span>
-                                ${hasMapPins ? `
-                                <button onclick="toggleMap(${day.day})" class="map-toggle-btn px-3 py-1 rounded-full text-xs font-semibold border ${theme.badge} flex items-center gap-1.5">
-                                    <i data-lucide="map" class="w-3.5 h-3.5"></i> Map
-                                </button>
-                                ` : ''}
-                                <span class="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${theme.badge}">${locInfo.name}</span>
-                            </div>
-                        </div>
+                html += '<div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">' +
+                    '<div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r ' + theme.headerGrad + ' to-white">' +
+                        '<div><p class="text-sm font-bold ' + theme.textMain + ' mb-1 flex items-center gap-2">DAY ' + day.day + ' <span class="text-slate-300">&bull;</span> ' + day.date + '</p>' +
+                        '<h3 class="text-xl font-extrabold text-slate-900">' + day.title + '</h3></div>' +
+                        '<div class="flex flex-wrap justify-end items-center gap-2 sm:gap-3">' +
+                            '<span class="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1.5" data-day-expense="' + day.day + '"><i data-lucide="wallet" class="w-3.5 h-3.5"></i> $' + dayExpense + '</span>' +
+                            (hasMapPins ? '<button onclick="toggleMap(' + day.day + ')" class="map-toggle-btn px-3 py-1 rounded-full text-xs font-semibold border ' + theme.badge + ' flex items-center gap-1.5"><i data-lucide="map" class="w-3.5 h-3.5"></i> Map</button>' : '') +
+                            '<span class="hidden sm:inline-flex px-3 py-1 rounded-full text-xs font-semibold border ' + theme.badge + '">' + locInfo.name + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    (hasMapPins ? '<div id="map-container-' + day.day + '" class="map-container px-6"><div id="map-' + day.day + '" class="day-map"></div></div>' : '') +
+                    '<div class="p-6"><div class="relative border-l-2 border-slate-100 ml-3 space-y-8">';
 
-                        ${hasMapPins ? `
-                        <div id="map-container-${day.day}" class="map-container px-6">
-                            <div id="map-${day.day}" class="day-map"></div>
-                        </div>
-                        ` : ''}
+                day.events.forEach(function(event, eventIdx) {
+                    var descHtml = event.link
+                        ? '<a href="' + event.link + '" target="_blank" class="text-slate-800 font-medium text-lg leading-tight hover:text-blue-600 transition-colors block">' + event.desc + '</a>'
+                        : '<span class="text-slate-800 font-medium text-lg leading-tight block">' + event.desc + '</span>';
 
-                        <div class="p-6">
-                            <div class="relative border-l-2 border-slate-100 ml-3 space-y-8">
-                `;
+                    var subLinksHtml = '';
+                    if (event.subLinks) {
+                        subLinksHtml = '<div class="flex flex-col gap-1.5 mt-2">';
+                        event.subLinks.forEach(function(sub) {
+                            subLinksHtml += '<a href="' + sub.link + '" target="_blank" class="text-sm font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1.5"><i data-lucide="corner-down-right" class="w-3.5 h-3.5"></i> ' + sub.name + '</a>';
+                        });
+                        subLinksHtml += '</div>';
+                    }
 
-                day.events.forEach((event, eventIdx) => {
-                    html += `
-                        <div class="relative pl-8">
-                            <div class="absolute -left-[17px] top-1 bg-white border-2 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${theme.timelineIconNode}">
-                                <i data-lucide="${event.icon || 'circle'}" class="w-3.5 h-3.5"></i>
-                            </div>
-                            <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                                <span class="text-sm font-bold text-slate-400 min-w-[80px] flex items-center gap-1.5 mt-1">
-                                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> ${event.time}
-                                </span>
-                                <div class="flex flex-col flex-1">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <div class="flex flex-col">
-                                            ${event.link 
-                                                ? `<a href="${event.link}" target="_blank" class="text-slate-800 font-medium text-lg leading-tight hover:text-blue-600 transition-colors block">${event.desc}</a>`
-                                                : `<span class="text-slate-800 font-medium text-lg leading-tight block">${event.desc}</span>`
-                                            }
-                                        </div>
-                                        <div class="flex items-center gap-1 shrink-0 mt-0.5">
-                                            <span class="text-xs text-slate-400">$</span>
-                                            <input type="number" min="0" step="1" class="expense-input" value="${event.expense || 0}" 
-                                                onchange="updateExpense('${trip.id}', ${day.day}, ${eventIdx}, this.value)" onfocus="this.select()" placeholder="0" />
-                                        </div>
-                                    </div>
-                                    ${event.subLinks ? `<div class="flex flex-col gap-1.5 mt-2">
-                                        ${event.subLinks.map(sub => `
-                                            <a href="${sub.link}" target="_blank" class="text-sm font-medium text-slate-500 hover:text-blue-600 flex items-center gap-1.5">
-                                                <i data-lucide="corner-down-right" class="w-3.5 h-3.5"></i> ${sub.name}
-                                            </a>
-                                        `).join('')}
-                                    </div>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    html += '<div class="relative pl-8">' +
+                        '<div class="absolute -left-[17px] top-1 bg-white border-2 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ' + theme.timelineIconNode + '"><i data-lucide="' + (event.icon || 'circle') + '" class="w-3.5 h-3.5"></i></div>' +
+                        '<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">' +
+                            '<span class="text-sm font-bold text-slate-400 min-w-[80px] flex items-center gap-1.5 mt-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ' + event.time + '</span>' +
+                            '<div class="flex flex-col flex-1">' +
+                                '<div class="flex items-start justify-between gap-2">' +
+                                    '<div class="flex flex-col">' + descHtml + '</div>' +
+                                    '<div class="flex items-center gap-1 shrink-0 mt-0.5"><span class="text-xs text-slate-400">$</span>' +
+                                        '<input type="number" min="0" step="1" class="expense-input" value="' + (event.expense || 0) + '" onchange="updateExpense(\'' + trip.id + '\',' + day.day + ',' + eventIdx + ',this.value)" onfocus="this.select()" placeholder="0" />' +
+                                    '</div>' +
+                                '</div>' +
+                                subLinksHtml +
+                            '</div>' +
+                        '</div></div>';
                 });
 
-                html += `</div></div></div>`;
+                html += '</div></div></div>';
             });
-
             html += '</div>';
             return html;
         }
 
-        // --- EXPENSE UPDATE ---
+        // =====================================================================
+        // Expense update
+        // =====================================================================
         function updateExpense(tripId, dayNum, eventIdx, value) {
-            const trip = trips.find(t => t.id === tripId);
+            var trip = trips.find(function(t) { return t.id === tripId; });
             if (!trip) return;
-            const day = trip.itinerary.find(d => d.day === dayNum);
+            var day = trip.itinerary.find(function(d) { return d.day === dayNum; });
             if (day && day.events[eventIdx] !== undefined) {
                 day.events[eventIdx].expense = Math.max(0, parseInt(value) || 0);
-                saveData();
+                saveSingleTrip(trip);
                 renderHeaderMeta(trip);
-                updateExpenseDisplays(trip);
+                // Update day badges without full re-render
+                trip.itinerary.forEach(function(d) {
+                    var badge = document.querySelector('[data-day-expense="' + d.day + '"]');
+                    if (badge) badge.innerHTML = '<i data-lucide="wallet" class="w-3.5 h-3.5"></i> $' + getDayExpenses(trip, d.day);
+                });
+                // Re-render expense summary
+                var wasOpenMaps = new Set(openMaps);
+                updateTripContent();
+                wasOpenMaps.forEach(function(dn) { setTimeout(function() { toggleMap(dn); }, 100); });
             }
         }
 
-        function updateExpenseDisplays(trip) {
-            trip.itinerary.forEach(day => {
-                const dayExpense = getDayExpenses(trip, day.day);
-                const badge = document.querySelector(`[data-day-expense="${day.day}"]`);
-                if (badge) badge.innerHTML = `<i data-lucide="wallet" class="w-3.5 h-3.5"></i> $${dayExpense}`;
-            });
-            const wasOpenMaps = new Set(openMaps);
-            updateTripContent();
-            wasOpenMaps.forEach(dayNum => setTimeout(() => toggleMap(dayNum), 100));
-        }
-
-        // --- MAP LOGIC ---
+        // =====================================================================
+        // Map logic
+        // =====================================================================
         function toggleMap(dayNum) {
-            const container = document.getElementById(`map-container-${dayNum}`);
+            var container = document.getElementById('map-container-' + dayNum);
             if (!container) return;
-
             if (openMaps.has(dayNum)) {
                 container.classList.remove('open');
                 openMaps.delete(dayNum);
-                if (mapInstances[dayNum]) {
-                    mapInstances[dayNum].remove();
-                    delete mapInstances[dayNum];
-                }
+                if (mapInstances[dayNum]) { mapInstances[dayNum].remove(); delete mapInstances[dayNum]; }
             } else {
                 container.classList.add('open');
                 openMaps.add(dayNum);
-                setTimeout(() => initMap(dayNum), 50);
+                setTimeout(function() { initMap(dayNum); }, 50);
             }
         }
 
         function initMap(dayNum) {
-            const mapEl = document.getElementById(`map-${dayNum}`);
+            var mapEl = document.getElementById('map-' + dayNum);
             if (!mapEl || mapInstances[dayNum]) return;
-
-            const trip = trips.find(t => t.id === activeTripId);
-            const day = trip.itinerary.find(d => d.day === dayNum);
+            var trip = trips.find(function(t) { return t.id === activeTripId; });
+            var day = trip.itinerary.find(function(d) { return d.day === dayNum; });
             if (!day) return;
 
-            const locInfo = trip.locations.find(l => l.id === day.location) || { color: 'blue' };
-            const theme = themeStyles[locInfo.color] || themeStyles.blue;
-            const markerColor = theme.mapMarker;
+            var locInfo = trip.locations.find(function(l) { return l.id === day.location; }) || { color: 'blue' };
+            var theme = themeStyles[locInfo.color] || themeStyles.blue;
+            var markerColor = theme.mapMarker;
 
-            const eventsWithCoords = day.events.filter(e => e.latlng && e.latlng.length === 2);
+            var eventsWithCoords = day.events.filter(function(e) { return e.latlng && e.latlng.length === 2; });
             if (eventsWithCoords.length === 0) return;
 
-            const map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
+            var map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
             mapInstances[dayNum] = map;
-
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
-            function createNumberedIcon(num, color) {
-                return L.divIcon({
+            var latlngs = [];
+            eventsWithCoords.forEach(function(event, idx) {
+                var icon = L.divIcon({
                     className: 'custom-marker',
-                    html: `<div style="background: ${color}; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${num}</div>`,
+                    html: '<div style="background:' + markerColor + ';color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' + (idx+1) + '</div>',
                     iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
                 });
-            }
-
-            const latlngs = [];
-            eventsWithCoords.forEach((event, idx) => {
-                const icon = createNumberedIcon(idx + 1, markerColor);
-                const marker = L.marker(event.latlng, { icon }).addTo(map);
-                marker.bindPopup(`
-                    <div style="min-width: 160px;">
-                        <strong style="font-size: 13px;">${idx + 1}. ${event.desc.replace(/<[^>]*>/g, '')}</strong><br>
-                        <span style="color: #64748b; font-size: 12px;">${event.time}</span>
-                        ${event.expense ? `<br><span style="color: #3b82f6; font-size: 12px; font-weight: 600;">$${event.expense}</span>` : ''}
-                    </div>
-                `);
+                var marker = L.marker(event.latlng, { icon: icon }).addTo(map);
+                marker.bindPopup('<div style="min-width:160px;"><strong style="font-size:13px;">' + (idx+1) + '. ' + event.desc.replace(/<[^>]*>/g, '') + '</strong><br><span style="color:#64748b;font-size:12px;">' + event.time + '</span>' + (event.expense ? '<br><span style="color:#3b82f6;font-size:12px;font-weight:600;">$' + event.expense + '</span>' : '') + '</div>');
                 latlngs.push(event.latlng);
             });
 
             if (latlngs.length > 1) L.polyline(latlngs, { color: markerColor, weight: 3, opacity: 0.6, dashArray: '8, 8' }).addTo(map);
             if (latlngs.length > 0) map.fitBounds(L.latLngBounds(latlngs), { padding: [30, 30] });
-            setTimeout(() => map.invalidateSize(), 400);
+            setTimeout(function() { map.invalidateSize(); }, 400);
         }
 
-        // Start
+        // =====================================================================
+        // Boot
+        // =====================================================================
         window.onload = loadData;
     </script>
 </body>
